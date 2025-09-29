@@ -152,28 +152,48 @@ export default function ItemDetailPage() {
             
             {((item.media && item.media.length > 1) || (item.images && item.images.length > 1)) && (
               <div className="flex space-x-2 overflow-x-auto">
-                {(item.media || item.images)?.map((media, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`flex-shrink-0 w-20 h-20 relative rounded-md overflow-hidden border-2 ${
-                      currentImageIndex === index ? 'border-[#F71D3B]' : 'border-gray-200'
-                    }`}
-                  >
-                    <Image
-                      src={item.media ? media.thumbnail : media}
-                      alt={`${item.name} thumbnail ${index + 1}`}
-                      fill
-                      sizes="80px"
-                      className="object-cover"
-                    />
-                    {item.media && media.type === 'video' && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                        <span className="text-white text-xs">▶</span>
-                      </div>
-                    )}
-                  </button>
-                ))}
+                {item.media && item.media.length > 1 ? (
+                  item.media.map((media, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`flex-shrink-0 w-20 h-20 relative rounded-md overflow-hidden border-2 ${
+                        currentImageIndex === index ? 'border-[#F71D3B]' : 'border-gray-200'
+                      }`}
+                    >
+                      <Image
+                        src={media.thumbnail}
+                        alt={`${item.name} thumbnail ${index + 1}`}
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                      />
+                      {media.type === 'video' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                          <span className="text-white text-xs">▶</span>
+                        </div>
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  item.images?.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`flex-shrink-0 w-20 h-20 relative rounded-md overflow-hidden border-2 ${
+                        currentImageIndex === index ? 'border-[#F71D3B]' : 'border-gray-200'
+                      }`}
+                    >
+                      <Image
+                        src={image}
+                        alt={`${item.name} thumbnail ${index + 1}`}
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                      />
+                    </button>
+                  ))
+                )}
               </div>
             )}
           </div>
