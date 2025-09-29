@@ -43,6 +43,13 @@ export default function Navbar({
           ))}
       </div>
 
+      {/* Marketplace Link */}
+      <Link href={'/marketplace'}>
+        <div className='flex items-center space-x-2 bg-[#FFF2F3] px-3 py-1 rounded-[100px] font-poppins font-bold text-[14px] leading-[16px] mr-2'>
+          <span className='text-gray-700 font-semibold'>Shop</span>
+        </div>
+      </Link>
+
       {/* Pro Badge */}
       <Link href={'/get-started'}>
         <div className='flex items-center space-x-2 bg-[#FFF2F3] px-3 py-1 rounded-[100px] font-poppins font-bold text-[14px] leading-[16px]'>
