@@ -8,28 +8,58 @@ export interface ApiResponse<T> {
 
 export interface Item {
   id: string;
-  title: string;
+  name: string;
   description: string;
   price: number;
-  currency: string;
+  currency?: string;
   images: string[];
-  seller?: {
-    id: string;
+  media: {
+    url: string;
+    type: 'image' | 'video';
+    width?: number;
+    height?: number;
+    thumbnail: string;
+  }[];
+  user?: {
+    userId: string;
+    name: string;
+    firstName: string;
+    lastName: string;
     username: string;
-    avatar?: string;
+    locationName: string;
+  };
+  sellerId?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    name: string;
   };
   categoryId: number;
   conditionType: number;
   conditionTypeName: string;
   size?: string;
+  color?: {
+    id: string;
+    name: string;
+    hex: string;
+  };
   brand?: {
     id: string;
     name: string;
     domain?: string;
     logo?: string;
-  };
+  } | string;
+  age?: string;
+  categoryTree?: {
+    id: number;
+    parentId: number | null;
+    name: string;
+    seoname: string;
+    seourl: string;
+    imageUrl: string;
+  }[];
   created: string;
-  deliveryMethodMeetInPerson: boolean;
+  deliveryMethodMeetInPerson?: boolean;
 }
 
 export interface Category {
@@ -47,14 +77,33 @@ export interface User {
   token?: string;
 }
 
+export interface FilterConfig {
+  ages: { id: string; value: string }[];
+  clothingSize: {
+    tops: { id: string; value: string }[];
+    trousers: { id: string; value: string }[];
+    jeans: { id: string; value: string }[];
+  };
+  shoesSize: { id: string; value: string }[];
+  colors: { id: string; name: string; hex: string }[];
+}
+
 export interface SearchFilters {
-  category_id?: string;
-  min_price?: number;
-  max_price?: number;
-  condition?: string;
-  size?: string;
-  brand?: string;
-  query?: string;
+  term?: string;
+  categoryId?: string;
+  priceMin?: number;
+  priceMax?: number;
+  selectedCondition?: string[];
+  selectedBrandId?: string[];
+  selectedColorId?: string[];
+  selectedAge?: string[];
+  selectedShoeSize?: string[];
+  selectedTrouserSize?: string[];
+  selectedJeanSize?: string[];
+  selectedTopSize?: string[];
+  l1?: string;
+  l2?: string;
+  l3?: string;
 }
 
 class ApiClient {
@@ -142,9 +191,15 @@ class ApiClient {
   async searchItems(filters: SearchFilters = {}): Promise<ApiResponse<Item[]>> {
     const params = new URLSearchParams();
     
+    params.append('include', 'user,media,brand,color,categoryTree');
+    
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
-        params.append(key, value.toString());
+        if (Array.isArray(value)) {
+          value.forEach(v => params.append(key, v.toString()));
+        } else {
+          params.append(key, value.toString());
+        }
       }
     });
 
@@ -157,6 +212,10 @@ class ApiClient {
 
   async getWalletBalance(): Promise<ApiResponse<{ balance: number; currency: string }>> {
     return this.request('/v4/wallet/balance');
+  }
+
+  async getFilterConfig(): Promise<ApiResponse<FilterConfig>> {
+    return this.request<FilterConfig>('/v4/items/config');
   }
 }
 

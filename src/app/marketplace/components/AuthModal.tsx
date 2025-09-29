@@ -77,6 +77,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
                 value={formData.username}
                 onChange={handleInputChange}
                 required
+                autoComplete="username"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F71D3B] focus:border-transparent font-poppins"
               />
             </div>
@@ -92,6 +93,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
               value={formData.email}
               onChange={handleInputChange}
               required
+              autoComplete="email"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F71D3B] focus:border-transparent font-poppins"
             />
           </div>
@@ -106,6 +108,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
               value={formData.password}
               onChange={handleInputChange}
               required
+              autoComplete={isLogin ? "current-password" : "new-password"}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F71D3B] focus:border-transparent font-poppins"
             />
           </div>

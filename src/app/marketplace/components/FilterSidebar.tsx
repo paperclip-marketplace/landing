@@ -1,41 +1,56 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiClient, FilterConfig, SearchFilters } from '@/lib/api';
 
 interface FilterSidebarProps {
-  filters: {
-    min_price: string;
-    max_price: string;
-    condition: string;
-    size: string;
-    brand: string;
-  };
-  onFiltersChange: (filters: FilterSidebarProps['filters']) => void;
+  filters: SearchFilters;
+  onFiltersChange: (filters: SearchFilters) => void;
+  selectedCategory?: string;
 }
 
-export default function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) {
-  const [localFilters, setLocalFilters] = useState(filters);
+export default function FilterSidebar({ filters, onFiltersChange, selectedCategory }: FilterSidebarProps) {
+  const [filterConfig, setFilterConfig] = useState<FilterConfig | null>(null);
+  const [localFilters, setLocalFilters] = useState<SearchFilters>(filters);
 
-  const handleFilterChange = (key: string, value: string) => {
+  useEffect(() => {
+    loadFilterConfig();
+  }, []);
+
+  const loadFilterConfig = async () => {
+    try {
+      const response = await apiClient.getFilterConfig();
+      if (response.success) {
+        setFilterConfig(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load filter config:', error);
+    }
+  };
+
+  const handleFilterChange = (key: keyof SearchFilters, value: any) => {
     const newFilters = { ...localFilters, [key]: value };
     setLocalFilters(newFilters);
     onFiltersChange(newFilters);
   };
 
+  const handleMultiSelectChange = (key: keyof SearchFilters, value: string, checked: boolean) => {
+    const currentValues = (localFilters[key] as string[]) || [];
+    const newValues = checked 
+      ? [...currentValues, value]
+      : currentValues.filter(v => v !== value);
+    handleFilterChange(key, newValues);
+  };
+
   const clearFilters = () => {
-    const clearedFilters = {
-      min_price: '',
-      max_price: '',
-      condition: '',
-      size: '',
-      brand: '',
-    };
+    const clearedFilters: SearchFilters = {};
     setLocalFilters(clearedFilters);
     onFiltersChange(clearedFilters);
   };
 
-  const conditions = ['New', 'Like New', 'Good', 'Fair', 'Poor'];
-  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  if (!filterConfig) {
+    return <div className="bg-white rounded-lg shadow-soft p-4">Loading filters...</div>;
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-soft p-4">
@@ -49,7 +64,7 @@ export default function FilterSidebar({ filters, onFiltersChange }: FilterSideba
         </button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2 font-poppins">
             Price Range
@@ -58,15 +73,15 @@ export default function FilterSidebar({ filters, onFiltersChange }: FilterSideba
             <input
               type="number"
               placeholder="Min"
-              value={localFilters.min_price}
-              onChange={(e) => handleFilterChange('min_price', e.target.value)}
+              value={localFilters.priceMin || ''}
+              onChange={(e) => handleFilterChange('priceMin', e.target.value ? parseFloat(e.target.value) : undefined)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F71D3B] focus:border-transparent font-poppins"
             />
             <input
               type="number"
               placeholder="Max"
-              value={localFilters.max_price}
-              onChange={(e) => handleFilterChange('max_price', e.target.value)}
+              value={localFilters.priceMax || ''}
+              onChange={(e) => handleFilterChange('priceMax', e.target.value ? parseFloat(e.target.value) : undefined)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F71D3B] focus:border-transparent font-poppins"
             />
           </div>
@@ -74,17 +89,38 @@ export default function FilterSidebar({ filters, onFiltersChange }: FilterSideba
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2 font-poppins">
-            Condition
+            Colors
+          </label>
+          <div className="grid grid-cols-4 gap-2">
+            {filterConfig.colors.map((color) => (
+              <button
+                key={color.id}
+                onClick={() => handleMultiSelectChange('selectedColorId', color.id, !(localFilters.selectedColorId || []).includes(color.id))}
+                className={`w-8 h-8 rounded-full border-2 ${
+                  (localFilters.selectedColorId || []).includes(color.id) 
+                    ? 'border-[#F71D3B] ring-2 ring-[#F71D3B] ring-opacity-30' 
+                    : 'border-gray-300'
+                }`}
+                style={{ backgroundColor: color.hex || '#ccc' }}
+                title={color.name}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2 font-poppins">
+            Age
           </label>
           <select
-            value={localFilters.condition}
-            onChange={(e) => handleFilterChange('condition', e.target.value)}
+            value={(localFilters.selectedAge || [])[0] || ''}
+            onChange={(e) => handleFilterChange('selectedAge', e.target.value ? [e.target.value] : [])}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F71D3B] focus:border-transparent font-poppins"
           >
-            <option value="">Any Condition</option>
-            {conditions.map((condition) => (
-              <option key={condition} value={condition}>
-                {condition}
+            <option value="">Any Age</option>
+            {filterConfig.ages.map((age) => (
+              <option key={age.id} value={age.value}>
+                {age.value}
               </option>
             ))}
           </select>
@@ -94,31 +130,59 @@ export default function FilterSidebar({ filters, onFiltersChange }: FilterSideba
           <label className="block text-sm font-medium text-gray-700 mb-2 font-poppins">
             Size
           </label>
-          <select
-            value={localFilters.size}
-            onChange={(e) => handleFilterChange('size', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F71D3B] focus:border-transparent font-poppins"
-          >
-            <option value="">Any Size</option>
-            {sizes.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="space-y-2">
+            <select
+              value={(localFilters.selectedTopSize || [])[0] || ''}
+              onChange={(e) => handleFilterChange('selectedTopSize', e.target.value ? [e.target.value] : [])}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F71D3B] focus:border-transparent font-poppins"
+            >
+              <option value="">Any Top Size</option>
+              {filterConfig.clothingSize.tops.map((size) => (
+                <option key={size.id} value={size.value}>
+                  {size.value}
+                </option>
+              ))}
+            </select>
+            
+            <select
+              value={(localFilters.selectedTrouserSize || [])[0] || ''}
+              onChange={(e) => handleFilterChange('selectedTrouserSize', e.target.value ? [e.target.value] : [])}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F71D3B] focus:border-transparent font-poppins"
+            >
+              <option value="">Any Trouser Size</option>
+              {filterConfig.clothingSize.trousers.map((size) => (
+                <option key={size.id} value={size.value}>
+                  {size.value}
+                </option>
+              ))}
+            </select>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 font-poppins">
-            Brand
-          </label>
-          <input
-            type="text"
-            placeholder="Enter brand name"
-            value={localFilters.brand}
-            onChange={(e) => handleFilterChange('brand', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F71D3B] focus:border-transparent font-poppins"
-          />
+            <select
+              value={(localFilters.selectedJeanSize || [])[0] || ''}
+              onChange={(e) => handleFilterChange('selectedJeanSize', e.target.value ? [e.target.value] : [])}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F71D3B] focus:border-transparent font-poppins"
+            >
+              <option value="">Any Jean Size</option>
+              {filterConfig.clothingSize.jeans.map((size) => (
+                <option key={size.id} value={size.value}>
+                  {size.value}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={(localFilters.selectedShoeSize || [])[0] || ''}
+              onChange={(e) => handleFilterChange('selectedShoeSize', e.target.value ? [e.target.value] : [])}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F71D3B] focus:border-transparent font-poppins"
+            >
+              <option value="">Any Shoe Size</option>
+              {filterConfig.shoesSize.map((size) => (
+                <option key={size.id} value={size.value}>
+                  {size.value}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { apiClient, Item } from '@/lib/api';
 import AuthModal from '../../components/AuthModal';
@@ -47,7 +48,7 @@ export default function ItemDetailPage() {
     alert('Purchase functionality will be implemented with MangoPay integration');
   };
 
-  const formatPrice = (price: number, currency: string) => {
+  const formatPrice = (price: number, currency?: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency || 'USD',
@@ -77,28 +78,81 @@ export default function ItemDetailPage() {
     <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Image Gallery */}
+          {/* Image/Video Gallery */}
           <div className="space-y-4">
             <div className="aspect-square relative overflow-hidden rounded-lg bg-gray-100">
-              {item.images && item.images.length > 0 ? (
-                <Image
-                  src={item.images[currentImageIndex]}
-                  alt={item.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  priority
-                  className="object-cover"
-                />
+              {item.media && item.media.length > 0 ? (
+                <>
+                  {item.media[currentImageIndex].type === 'video' ? (
+                    <video
+                      src={item.media[currentImageIndex].url}
+                      controls
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={item.media[currentImageIndex].url}
+                      alt={`${item.name} image ${currentImageIndex + 1}`}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      priority
+                      className="object-cover"
+                    />
+                  )}
+                  {item.media.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setCurrentImageIndex(currentImageIndex > 0 ? currentImageIndex - 1 : item.media.length - 1)}
+                        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity"
+                      >
+                        ←
+                      </button>
+                      <button
+                        onClick={() => setCurrentImageIndex(currentImageIndex < item.media.length - 1 ? currentImageIndex + 1 : 0)}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity"
+                      >
+                        →
+                      </button>
+                    </>
+                  )}
+                </>
+              ) : item.images && item.images.length > 0 ? (
+                <>
+                  <Image
+                    src={item.images[currentImageIndex]}
+                    alt={`${item.name} image ${currentImageIndex + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    priority
+                    className="object-cover"
+                  />
+                  {item.images.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setCurrentImageIndex(currentImageIndex > 0 ? currentImageIndex - 1 : item.images.length - 1)}
+                        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity"
+                      >
+                        ←
+                      </button>
+                      <button
+                        onClick={() => setCurrentImageIndex(currentImageIndex < item.images.length - 1 ? currentImageIndex + 1 : 0)}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity"
+                      >
+                        →
+                      </button>
+                    </>
+                  )}
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-gray-400 text-lg">No image available</span>
+                  <span className="text-gray-400 text-lg">No media available</span>
                 </div>
               )}
             </div>
             
-            {item.images && item.images.length > 1 && (
+            {((item.media && item.media.length > 1) || (item.images && item.images.length > 1)) && (
               <div className="flex space-x-2 overflow-x-auto">
-                {item.images.map((image, index) => (
+                {(item.media || item.images)?.map((media, index) => (
                   <button
                     key={index}
                     onClick={() => setCurrentImageIndex(index)}
@@ -107,12 +161,17 @@ export default function ItemDetailPage() {
                     }`}
                   >
                     <Image
-                      src={image}
-                      alt={`${item.title} image ${index + 1}`}
+                      src={item.media ? media.thumbnail : media}
+                      alt={`${item.name} thumbnail ${index + 1}`}
                       fill
                       sizes="80px"
                       className="object-cover"
                     />
+                    {item.media && media.type === 'video' && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                        <span className="text-white text-xs">▶</span>
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -123,7 +182,7 @@ export default function ItemDetailPage() {
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 mb-2 font-poppins">
-                {item.title}
+                {item.name}
               </h1>
               <p className="text-2xl font-bold text-[#F71D3B] font-poppins">
                 {formatPrice(item.price, item.currency)}
@@ -159,26 +218,40 @@ export default function ItemDetailPage() {
               <h3 className="text-lg font-semibold text-gray-800 mb-2 font-poppins">
                 Seller
               </h3>
-              <div className="flex items-center space-x-3">
-                {item.seller?.avatar ? (
-                  <Image
-                    src={item.seller.avatar}
-                    alt={`${item.seller?.username || 'Unknown'} profile picture`}
-                    width={40}
-                    height={40}
-                    className="rounded-full"
-                  />
-                ) : (
-                  <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                    <span className="text-gray-600 font-semibold">
-                      {item.seller?.username?.charAt(0).toUpperCase() || '?'}
+              {item.user?.username ? (
+                <Link 
+                  href={`/marketplace/seller/${item.user.username}`}
+                  className="flex items-center space-x-3 hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                >
+                  <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
+                    <span className="text-gray-600 font-semibold text-lg">
+                      {item.user.firstName?.charAt(0).toUpperCase() || '?'}
                     </span>
                   </div>
-                )}
-                <span className="font-medium text-gray-800 font-poppins">
-                  @{item.seller?.username || 'Unknown'}
-                </span>
-              </div>
+                  <div>
+                    <span className="font-medium text-gray-800 font-poppins block">
+                      {item.user.name || 'Unknown Seller'}
+                    </span>
+                    <span className="text-sm text-gray-500 font-poppins">
+                      @{item.user.username} • {item.user.locationName || 'Unknown Location'}
+                    </span>
+                  </div>
+                </Link>
+              ) : (
+                <div className="flex items-center space-x-3 p-2">
+                  <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
+                    <span className="text-gray-600 font-semibold text-lg">?</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-800 font-poppins block">
+                      Unknown Seller
+                    </span>
+                    <span className="text-sm text-gray-500 font-poppins">
+                      Seller information unavailable
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="border-t border-gray-200 pt-6">

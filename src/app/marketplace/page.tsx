@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { apiClient, Item, Category } from '@/lib/api';
+import { apiClient, Item, Category, SearchFilters } from '@/lib/api';
 import ItemGrid from './components/ItemGrid';
 import CategoryFilter from './components/CategoryFilter';
 import SearchBar from './components/SearchBar';
@@ -14,13 +14,8 @@ export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    min_price: '',
-    max_price: '',
-    condition: '',
-    size: '',
-    brand: '',
-  });
+  const [filters, setFilters] = useState<SearchFilters>({});
+  const [selectedCategoryPath, setSelectedCategoryPath] = useState<{l1?: string, l2?: string, l3?: string}>({});
 
   useEffect(() => {
     loadInitialData();
@@ -29,17 +24,27 @@ export default function MarketplacePage() {
   const loadInitialData = async () => {
     setLoading(true);
     try {
+      console.log('Loading initial data...');
       const [itemsResponse, categoriesResponse] = await Promise.all([
         apiClient.getFeaturedItems(),
         apiClient.getCategories(),
       ]);
 
+      console.log('Items response:', itemsResponse);
+      console.log('Categories response:', categoriesResponse);
+
       if (itemsResponse.success) {
+        console.log('Setting items:', itemsResponse.data);
         setItems(itemsResponse.data);
+      } else {
+        console.error('Failed to load items:', itemsResponse.message);
       }
 
       if (categoriesResponse.success) {
+        console.log('Setting categories:', categoriesResponse.data);
         setCategories(categoriesResponse.data);
+      } else {
+        console.error('Failed to load categories:', categoriesResponse.message);
       }
     } catch (error) {
       console.error('Failed to load initial data:', error);
@@ -51,18 +56,18 @@ export default function MarketplacePage() {
   const handleSearch = async () => {
     setLoading(true);
     try {
-      const searchFilters = {
-        query: searchQuery,
-        category_id: selectedCategory,
-        min_price: filters.min_price ? parseFloat(filters.min_price) : undefined,
-        max_price: filters.max_price ? parseFloat(filters.max_price) : undefined,
-        condition: filters.condition || undefined,
-        size: filters.size || undefined,
-        brand: filters.brand || undefined,
+      const searchFilters: SearchFilters = {
+        ...filters,
+        term: searchQuery,
+        categoryId: selectedCategory,
+        ...selectedCategoryPath,
       };
 
+      console.log('Search filters:', searchFilters);
       const response = await apiClient.searchItems(searchFilters);
+      console.log('Search response:', response);
       if (response.success) {
+        console.log('First search item:', response.data[0]);
         setItems(response.data);
       }
     } catch (error) {
@@ -72,12 +77,13 @@ export default function MarketplacePage() {
     }
   };
 
-  const handleCategoryChange = (categoryId: string) => {
+  const handleCategoryChange = (categoryId: string, l1?: string, l2?: string, l3?: string) => {
     setSelectedCategory(categoryId);
+    setSelectedCategoryPath({ l1, l2, l3 });
     handleSearch();
   };
 
-  const handleFiltersChange = (newFilters: typeof filters) => {
+  const handleFiltersChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
     handleSearch();
   };
@@ -124,6 +130,7 @@ export default function MarketplacePage() {
               <FilterSidebar
                 filters={filters}
                 onFiltersChange={handleFiltersChange}
+                selectedCategory={selectedCategory}
               />
             </div>
           </div>
