@@ -91,6 +91,7 @@ export interface FilterConfig {
 export interface SearchFilters {
   term?: string;
   categoryId?: string;
+  sellerId?: string;
   priceMin?: number;
   priceMax?: number;
   selectedCondition?: string[];

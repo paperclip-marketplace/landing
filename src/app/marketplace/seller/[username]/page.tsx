@@ -22,7 +22,7 @@ export default function SellerProfilePage() {
     try {
       const [sellerResponse, itemsResponse] = await Promise.all([
         fetch(`https://api.paperclip.co/v4/users/byUsername/${username}`),
-        apiClient.searchItems({ term: '', seller: username })
+        apiClient.searchItems({ sellerId: username })
       ]);
 
       if (sellerResponse.ok) {
