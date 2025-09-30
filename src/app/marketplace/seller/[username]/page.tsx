@@ -22,7 +22,7 @@ export default function SellerProfilePage() {
     try {
       const [sellerResponse, itemsResponse] = await Promise.all([
         fetch(`https://api.paperclip.co/v4/users/byUsername/${username}`),
-        apiClient.searchItems({ sellerId: username })
+        apiClient.searchItems({ term: '', seller: username })
       ]);
 
       if (sellerResponse.ok) {
@@ -30,11 +30,15 @@ export default function SellerProfilePage() {
         setSeller(sellerData.data);
       }
 
-      if (itemsResponse.success) {
+      if (itemsResponse.success && Array.isArray(itemsResponse.data)) {
         setItems(itemsResponse.data);
+      } else {
+        console.warn('Items response not successful or not an array:', itemsResponse);
+        setItems([]);
       }
     } catch (error) {
       console.error('Failed to load seller data:', error);
+      setItems([]);
     } finally {
       setLoading(false);
     }
