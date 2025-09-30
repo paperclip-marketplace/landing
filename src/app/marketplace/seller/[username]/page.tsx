@@ -22,7 +22,7 @@ export default function SellerProfilePage() {
     try {
       const [sellerResponse, itemsResponse] = await Promise.all([
         fetch(`https://api.paperclip.co/v4/users/byUsername/${username}`),
-        apiClient.searchItems({ term: `@${username}` })
+        apiClient.searchItems({ sellerId: username })
       ]);
 
       if (sellerResponse.ok) {
@@ -49,7 +49,7 @@ export default function SellerProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pt-20">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {seller && (
           <div className="mb-8">
@@ -65,6 +65,12 @@ export default function SellerProfilePage() {
                 </h1>
                 <p className="text-gray-600 font-poppins">@{seller.username}</p>
                 <p className="text-gray-500 font-poppins">{seller.locationName}</p>
+                {seller.rating && (
+                  <div className="flex items-center mt-1">
+                    <span className="text-yellow-500">★</span>
+                    <span className="ml-1 text-sm text-gray-600">{seller.rating}/5</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

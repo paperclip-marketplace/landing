@@ -74,12 +74,9 @@ export default function ItemCard({ item }: ItemCardProps) {
           
           <div className="flex items-center justify-between text-sm text-gray-600">
             {item.user?.username ? (
-              <Link 
-                href={`/marketplace/seller/${item.user.username}`}
-                className="font-medium hover:text-[#F71D3B] transition-colors"
-              >
+              <span className="font-medium text-gray-600">
                 @{item.user.username}
-              </Link>
+              </span>
             ) : item.location?.name ? (
               <span className="text-gray-500 text-xs">
                 📍 {item.location.name}

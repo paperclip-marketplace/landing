@@ -40,25 +40,26 @@ export default function CategoryFilter({ categories, selectedCategory, onCategor
     return (
       <div key={category.id} className={`${level > 0 ? 'ml-4' : ''}`}>
         <div className="flex items-center">
-          {hasChildren && (
-            <button
-              onClick={() => toggleCategory(category.id)}
-              className="mr-2 text-gray-500 hover:text-gray-700 p-1"
-            >
-              <span className="text-xs">
-                {isExpanded ? '▼' : '▶'}
-              </span>
-            </button>
-          )}
           <button
             onClick={() => handleCategorySelect(category, currentPath)}
-            className={`flex-1 text-left px-3 py-2 rounded-md transition-colors font-poppins ${
+            className={`flex-1 text-left px-3 py-2 rounded-md transition-colors font-poppins flex items-center justify-between ${
               isSelected
                 ? 'bg-[#F71D3B] text-white'
                 : 'hover:bg-gray-100 text-gray-700'
             }`}
           >
-            {category.name}
+            <span>{category.name}</span>
+            {hasChildren && (
+              <span 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleCategory(category.id);
+                }}
+                className="ml-2 text-xs cursor-pointer hover:scale-110 transition-transform"
+              >
+                {isExpanded ? '▼' : '▶'}
+              </span>
+            )}
           </button>
         </div>
         

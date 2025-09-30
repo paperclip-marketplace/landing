@@ -14,6 +14,7 @@ export default function ItemDetailPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [mediaItems, setMediaItems] = useState<any[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -31,6 +32,11 @@ export default function ItemDetailPage() {
       if (response.success) {
         console.log('Item data:', response.data);
         setItem(response.data);
+        const allMedia = response.data.media && response.data.media.length > 0 
+          ? response.data.media 
+          : response.data.images?.map(img => ({ url: img, type: 'image', thumbnail: img })) || [];
+        setMediaItems(allMedia);
+        setCurrentImageIndex(0);
       }
     } catch (error) {
       console.error('Failed to load item:', error);
@@ -75,23 +81,23 @@ export default function ItemDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pt-20">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Image/Video Gallery */}
           <div className="space-y-4">
             <div className="aspect-square relative overflow-hidden rounded-lg bg-gray-100">
-              {item.media && item.media.length > 0 ? (
+              {mediaItems.length > 0 ? (
                 <>
-                  {item.media[currentImageIndex].type === 'video' ? (
+                  {mediaItems[currentImageIndex]?.type === 'video' ? (
                     <video
-                      src={item.media[currentImageIndex].url}
+                      src={mediaItems[currentImageIndex].url}
                       controls
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <Image
-                      src={item.media[currentImageIndex].url}
+                      src={mediaItems[currentImageIndex]?.url || ''}
                       alt={`${item.name} image ${currentImageIndex + 1}`}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
@@ -99,43 +105,16 @@ export default function ItemDetailPage() {
                       className="object-cover"
                     />
                   )}
-                  {item.media.length > 1 && (
+                  {mediaItems.length > 1 && (
                     <>
                       <button
-                        onClick={() => setCurrentImageIndex(currentImageIndex > 0 ? currentImageIndex - 1 : item.media.length - 1)}
+                        onClick={() => setCurrentImageIndex(currentImageIndex > 0 ? currentImageIndex - 1 : mediaItems.length - 1)}
                         className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity"
                       >
                         ←
                       </button>
                       <button
-                        onClick={() => setCurrentImageIndex(currentImageIndex < item.media.length - 1 ? currentImageIndex + 1 : 0)}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity"
-                      >
-                        →
-                      </button>
-                    </>
-                  )}
-                </>
-              ) : item.images && item.images.length > 0 ? (
-                <>
-                  <Image
-                    src={item.images[currentImageIndex]}
-                    alt={`${item.name} image ${currentImageIndex + 1}`}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    priority
-                    className="object-cover"
-                  />
-                  {item.images.length > 1 && (
-                    <>
-                      <button
-                        onClick={() => setCurrentImageIndex(currentImageIndex > 0 ? currentImageIndex - 1 : item.images.length - 1)}
-                        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity"
-                      >
-                        ←
-                      </button>
-                      <button
-                        onClick={() => setCurrentImageIndex(currentImageIndex < item.images.length - 1 ? currentImageIndex + 1 : 0)}
+                        onClick={() => setCurrentImageIndex(currentImageIndex < mediaItems.length - 1 ? currentImageIndex + 1 : 0)}
                         className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity"
                       >
                         →
@@ -150,50 +129,30 @@ export default function ItemDetailPage() {
               )}
             </div>
             
-            {((item.media && item.media.length > 1) || (item.images && item.images.length > 1)) && (
+            {mediaItems.length > 1 && (
               <div className="flex space-x-2 overflow-x-auto">
-                {item.media && item.media.length > 1 ? (
-                  item.media.map((media, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
-                      className={`flex-shrink-0 w-20 h-20 relative rounded-md overflow-hidden border-2 ${
-                        currentImageIndex === index ? 'border-[#F71D3B]' : 'border-gray-200'
-                      }`}
-                    >
-                      <Image
-                        src={media.thumbnail}
-                        alt={`${item.name} thumbnail ${index + 1}`}
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                      />
-                      {media.type === 'video' && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                          <span className="text-white text-xs">▶</span>
-                        </div>
-                      )}
-                    </button>
-                  ))
-                ) : (
-                  item.images?.map((image, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
-                      className={`flex-shrink-0 w-20 h-20 relative rounded-md overflow-hidden border-2 ${
-                        currentImageIndex === index ? 'border-[#F71D3B]' : 'border-gray-200'
-                      }`}
-                    >
-                      <Image
-                        src={image}
-                        alt={`${item.name} thumbnail ${index + 1}`}
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                      />
-                    </button>
-                  ))
-                )}
+                {mediaItems.map((media, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`flex-shrink-0 w-20 h-20 relative rounded-md overflow-hidden border-2 ${
+                      currentImageIndex === index ? 'border-[#F71D3B]' : 'border-gray-200'
+                    }`}
+                  >
+                    <Image
+                      src={media.thumbnail || media.url}
+                      alt={`${item.name} thumbnail ${index + 1}`}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
+                    {media.type === 'video' && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                        <span className="text-white text-xs">▶</span>
+                      </div>
+                    )}
+                  </button>
+                ))}
               </div>
             )}
           </div>

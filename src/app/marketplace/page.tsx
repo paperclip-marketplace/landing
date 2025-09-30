@@ -16,10 +16,18 @@ export default function MarketplacePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({});
   const [selectedCategoryPath, setSelectedCategoryPath] = useState<{l1?: string, l2?: string, l3?: string}>({});
+  const [filtersChanged, setFiltersChanged] = useState(false);
 
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  useEffect(() => {
+    if (filtersChanged) {
+      handleSearch();
+      setFiltersChanged(false);
+    }
+  }, [filters, selectedCategory, selectedCategoryPath, searchQuery, filtersChanged]);
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -80,12 +88,12 @@ export default function MarketplacePage() {
   const handleCategoryChange = (categoryId: string, l1?: string, l2?: string, l3?: string) => {
     setSelectedCategory(categoryId);
     setSelectedCategoryPath({ l1, l2, l3 });
-    handleSearch();
+    setFiltersChanged(true);
   };
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
-    handleSearch();
+    setFiltersChanged(true);
   };
 
   return (
