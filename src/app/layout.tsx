@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Paperclip',
   description: 'Paperclip',
+  verification: {
+    google: 'iYKTFfiq7i4ZJOVTE4IO6zO7PpLc_4M6agNKoEDBBrY',
+  },
 };
 
 const poppins = Inter({
